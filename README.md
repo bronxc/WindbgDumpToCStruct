@@ -1,6 +1,6 @@
 # WindbgDumpToCStruct
 
-Tool to parse !dt dump from Windbg to a C header file. See example for details
+Tool to parse dt dump from Windbg to a C header file. See example for details
 
 
 
