@@ -1,3 +1,4 @@
+import os
 import sys
 
 #pylint: disable=C0103
@@ -145,6 +146,7 @@ def ParseCBitfields(lines, types, names, offsets, length, indent = 0):
     index = 0
     while index < length:
         bit = types[index].split(', ')[1].split()[0]
+        names[index] += ';'
         lines.append(var_indent + _type.ljust(10, ' ') + names[index].ljust(25,' ') + ' : ' + bit)
         index += 1
 
@@ -167,6 +169,7 @@ def ParseCVariable(unfixed_type: str, name: str, offset: str):
 
     retval = fixed_type
     retval = retval.ljust(10, ' ')
+    name   += ';'
     retval += name.ljust(35, ' ')
     retval += '//' + offset
 
@@ -271,7 +274,7 @@ def WriteHeader(filepath, contents, struct_name: str):
             f.write(line)
             f.write('\n')
 
-        f.write('}\n')
+        f.write('} ;\n')
     return
 
 
