@@ -4,14 +4,17 @@ import sys
 #pylint: disable=C0103
 
 primitive_types = {
-    "UChar"  : "char",
+    "UChar"  : "unsigned char",
     "Uint8B" : "uint64_t",
     "Uint4B" : "uint32_t",
     "Uint2B" : "uint16_t",
     "Int8B"  : "int64_t",
     "Int4B"  : "int32_t",
     "Int2B"  : "int16_t",
+    "Char"   : "char",
     "Void"   : "void",
+    "Wchar"  : "wchar_t",
+    "char"   : "char",
     "void"   : "void"
 }
 
@@ -71,8 +74,8 @@ def CheckBitFieldLength(types):
         else:
             break
 
-    if retval < 2:
-        raise TypeError("Are you sure you are parsing a bitfield?")
+#    if retval < 2:
+#        raise TypeError("Are you sure you are parsing a bitfield?")
 
     return retval
 
@@ -110,7 +113,7 @@ def ParseCType(windbg_type: str):
 
         else:                                   #Is type of other struct
             retval = windbg_type + ' '
-    
+
     return retval
 
 def PopListsFromFront(length, lists):
@@ -134,7 +137,7 @@ def ParseCBitfields(lines, types, names, offsets, length, indent = 0):
 
     for i in range(length):
         bitfield_length += int(types[i].split(', ')[1].split()[0])
-    
+
     if bitfield_length > 8:
         _type = "int16_t"
     if bitfield_length > 16:
@@ -142,17 +145,17 @@ def ParseCBitfields(lines, types, names, offsets, length, indent = 0):
     if bitfield_length > 32:
         _type = "int64_t"
 
-    lines.append(indent_line + 'struct {')
+    if length > 1:
+        lines.append(indent_line + 'struct {')
     index = 0
     while index < length:
         bit = types[index].split(', ')[1].split()[0]
-        names[index] += ';'
-        lines.append(var_indent + _type.ljust(10, ' ') + names[index].ljust(25,' ') + ' : ' + bit)
+        lines.append(var_indent + _type.ljust(10, ' ') + names[index].ljust(25, ' ') + ' : ' + bit + ' ;')
         index += 1
 
     PopListsFromFront(length, [names, types, offsets])
-    lines.append(indent_line + '};' + ''.ljust(20,' ') + '//' + curr_offset)
-#    lines.extend(local_lines)
+    if length > 1:
+        lines.append(indent_line + '} ;' + ''.ljust(20,' ') + '//' + curr_offset)
     return
 
 
@@ -178,10 +181,6 @@ def ParseCVariable(unfixed_type: str, name: str, offset: str):
 def ParseCUnion(lines, offsets, names, types, union_length, indent = 0):
     indent_line = ''
     length_to_parse = union_length + 1
-#    local_lines = []
-#    local_offsets = offsets[0:length_to_parse]
-#    local_names = names[0:length_to_parse]
-#    local_types = types[0:length_to_parse]
 
     for i in range(indent+1):
         indent_line += '\t'
@@ -195,30 +194,28 @@ def ParseCUnion(lines, offsets, names, types, union_length, indent = 0):
         _type = ParseCType(types[0])
         if _type == 'bit':
             bitLen = CheckBitFieldLength(types)
-            ParseCBitfields(lines, types, names, offsets, bitLen, indent + 1)
+            _indent = 0
+            if bitLen > 1:
+                _indent += 1
+            ParseCBitfields(lines, types, names, offsets, bitLen, _indent)
             index += bitLen
         else:
             lines.append(var_indent + ParseCVariable(_type, names[0], offsets[0]))
-            PopListsFromFront(1,[names, types, offsets])
+            PopListsFromFront(1, [names, types, offsets])
         index += 1
 
     lines.append(indent_line + '};')
-#    lines.extend(local_lines)
     return
 
 
 def GenerateHeader(name_offset, types):
     lines = []
-#    closeBrackets = False
-    nLines = len(name_offset)
     offsets, names = SeperateOffsetsFromName(name_offset)
 
     while len(names) > 0:
- #       if closeBrackets is True:
- #           lines.append('}')
 
         union_length = CheckUnionLength(offsets)
-        if union_length > 0 :
+        if union_length > 0:
             ParseCUnion(lines, offsets, names, types, union_length)
         else:
             _type = ParseCType(types[0])
@@ -250,7 +247,6 @@ def parsefile(filepath):
     name_offset, types = SeperateTypeFromName(lines)
     generated_header = GenerateHeader(name_offset, types)
 
-
     return generated_header
 
 
@@ -268,13 +264,13 @@ def getfile():
             return filepath
 
 def WriteHeader(filepath, contents, struct_name: str):
-    with open(filepath,'w') as f:
+    with open(filepath, 'w') as f:
         f.write('struct ' + struct_name.upper() + ' {\n')
         for i, line in enumerate(contents):
             f.write(line)
             f.write('\n')
 
-        f.write('} ;\n')
+        f.write('}  ; \n')
     return
 
 
@@ -294,7 +290,7 @@ def main(argc, argv):
 
     if os.path.exists(final_file):
         raise FileExistsError("File exists.")
-    
+
     struct_name = filename
     WriteHeader(final_file, generated, struct_name)
     return
