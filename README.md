@@ -1,6 +1,8 @@
 # WindbgDumpToCStruct
 
 Tool to parse dt dump from Windbg to a C header file. See example for details
+Command line args : python dt2header.py <input_file_name> <struct_name>
+Example : python dt2header.py peb64.txt _PEB64
 
 
 
