@@ -276,17 +276,35 @@ def WriteHeader(filepath, contents, struct_name: str):
 
 def main(argc, argv):
     filepath = None
+    print(argc, argv)
 
-    if argc == 1:
-        filepath = getfile()
-    else:
-        filepath = argv[1]
+    while filepath == None:
+        if argc == 3:
+            filepath = os.path.join(os.getcwd(), argv[1])
+            if argv[1].endswith(".txt") is False:
+                filepath += ".txt"
+            if os.path.exists(filepath) == False:
+                print(filepath + "does not exist.")
+                filepath = None
+
+        elif argc == 1:
+            filepath = getfile()
+
+        else:
+            raise EnvironmentError("Call with 2 arguments, example: python dt2header.py input.txt struct_name")
 
     generated = parsefile(filepath)
     dirname = os.path.dirname(filepath)
-    filename = input("Enter the file name to be written to, without extension :  ")
-    final_file = filename + '.h'
-    final_file = os.path.join(dirname, final_file)
+
+    if argc == 1:
+        filename = input("Enter the name of the struct :  ")
+        final_file = filename + '.h'
+        final_file = os.path.join(dirname, final_file)
+    else:
+        filename = argv[2]
+        final_file = os.path.join(os.getcwd(), argv[2])
+        if final_file.endswith(".h") is False:
+            final_file += ".h"
 
     if os.path.exists(final_file):
         raise FileExistsError("File exists.")
