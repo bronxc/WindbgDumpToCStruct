@@ -150,7 +150,7 @@ def ParseCBitfields(lines, types, names, offsets, length, indent = 0):
     index = 0
     while index < length:
         bit = types[index].split(', ')[1].split()[0]
-        lines.append(var_indent + _type.ljust(10, ' ') + names[index].ljust(25, ' ') + ' : ' + bit + ' ;')
+        lines.append(var_indent + _type.ljust(15, ' ') + names[index].ljust(25, ' ') + ' : ' + bit + ' ;')
         index += 1
 
     PopListsFromFront(length, [names, types, offsets])
@@ -171,7 +171,7 @@ def ParseCVariable(unfixed_type: str, name: str, offset: str):
             name += '[' + arr
 
     retval = fixed_type
-    retval = retval.ljust(10, ' ')
+    retval = retval.ljust(15, ' ')
     name   += ';'
     retval += name.ljust(35, ' ')
     retval += '//' + offset
